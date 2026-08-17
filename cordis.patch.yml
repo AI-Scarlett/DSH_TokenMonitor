@@ -1,0 +1,5 @@
+# Adds only Token Monitor's own Host plugin entry. It does not replace,
+# disable, or patch any official DeepSeek Harness component.
+- insert:
+    - id: dsh-token-monitor
+      name: dsh-token-monitor

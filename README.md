@@ -1,34 +1,47 @@
-# DSH TokenMonitor
+# DSH Token Monitor
 
-一个本地优先、零运行时依赖的 LLM Token 用量监控面板。用于查看 Token 趋势、模型占比、请求明细、费用预测和月度预算。
+DSH Token Monitor 是一个标准、非破坏性的 DeepSeek Harness Host Plugin +
+Client Bundle。它在 DSH 设置的“插件 → Token 监控”中汇总当前 Profile
+可见会话的真实 Provider Token 用量。
 
-## 功能
+## 数据准确性
 
-- Token、费用、请求量与成功率总览
-- Canvas 绘制的输入/输出 Token 趋势
-- 模型维度的 Token、请求和费用分析
-- 请求搜索、状态筛选与 JSON 导出
-- 浏览器本地持久化的手动用量记录
-- 月度预算、预警阈值和费用预测
-- 响应式桌面/移动端界面
-- 无框架、无 CDN JavaScript 依赖，静态托管即可运行
+- Token 来自 DSH 标准 `tokenUsage` 投影：未缓存输入、缓存读取、缓存写入和输出。
+- 轮次、步骤、LLM 与工具耗时来自 `sessionStats` 投影。
+- 缺少 Provider usage 的会话明确显示为未测量，不使用字符数补齐。
+- 安装时可读取已有会话的累计 Token；逐日趋势从安装后首次本地快照开始。
+- 费用按用户输入的每百万 Token 单价在浏览器本地估算，不是 Provider 账单。
 
-## 本地运行
+## 隐私与权限
+
+插件不读取提示词、回复正文、会话文件、环境变量、API Key 或其他凭证；
+不访问网络、不执行命令、不注册 Host HTTP 路由，也不修改 Profile 或 DSH。
+价格、预算和每天一条聚合快照仅保存在当前浏览器 `localStorage`。
+
+## DSH 安装契约
+
+- Package：`dsh-token-monitor`
+- Entry ID：`dsh-token-monitor`
+- Bundle patch：`cordis.patch.yml`
+- Host entry：`src/index.mjs`
+- Browser bundle：`src/client.js`
+- DSH：`>=0.1.0-rc.6`
+- Node.js：`>=22.13.0`
+- Profile：`web`
+
+安装应通过支持固定 GitHub Commit 的 DSH 插件管理流程进行。不要修改
+DeepSeek Harness 源码或任何 `@deepseek-ai/*` 包。
+
+## 验证
 
 ```bash
-python3 -m http.server 4173
-# 打开 http://127.0.0.1:4173
+npm run check
+npm pack --dry-run --json
 ```
 
-## 测试与构建
+单元测试只使用内存对象，不读取或写入 `~/.dsh`。仓库测试通过不等同于
+真实 DSH 安装或 UI 验收；这两项是独立门槛。
 
-```bash
-python3 -m unittest discover -s tests -v
-python3 scripts/build.py
-```
+## License
 
-生产文件输出到 `dist/`，CSS/JS 文件名带内容哈希，并生成 `SHA256SUMS`。
-
-## 数据说明
-
-当前版本是独立静态前端，示例数据和新增记录保存在浏览器 `localStorage` 中，不会上传到服务器。后续可将 `state.requests` 的数据源替换为任意 OpenAI-compatible 网关或 DSH 采集端。
+MIT
