@@ -9,19 +9,22 @@ function dayKey(value = new Date()) {
 }
 
 export function emptyState() {
-  return { schemaVersion: 1, pricing: normalizePricing(), budget: 0, snapshots: [] }
+  return { schemaVersion: 2, pricing: normalizePricing(), budget: 0, snapshots: [] }
 }
 
 export function normalizeStored(value) {
-  if (!value || value.schemaVersion !== 1) return emptyState()
-  const snapshots = Array.isArray(value.snapshots)
-    ? value.snapshots.filter(item => item && /^\d{4}-\d{2}-\d{2}$/.test(item.day)).slice(-MAX_SNAPSHOTS).map(item => ({
-        day: item.day,
-        usage: normalizeUsage(item.usage),
-      }))
-    : []
+  if (!value || ![1, 2].includes(value.schemaVersion)) return emptyState()
+  let previous = null
+  const snapshots = []
+  for (const item of Array.isArray(value.snapshots) ? value.snapshots.slice(-MAX_SNAPSHOTS) : []) {
+    if (!item || !/^\d{4}-\d{2}-\d{2}$/.test(item.day)) continue
+    const latestUsage = normalizeUsage(item.latestUsage ?? item.usage)
+    const startUsage = normalizeUsage(item.startUsage ?? previous ?? latestUsage)
+    snapshots.push({ day: item.day, startUsage, latestUsage })
+    previous = latestUsage
+  }
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     pricing: normalizePricing(value.pricing),
     budget: typeof value.budget === 'number' && Number.isFinite(value.budget) && value.budget >= 0 ? value.budget : 0,
     snapshots,
@@ -42,7 +45,10 @@ export function saveStorage(state, storage = globalThis.localStorage) {
 export function recordDailySnapshot(state, summary, now = new Date()) {
   const current = normalizeStored(state)
   const day = dayKey(now)
-  const next = { day, usage: normalizeUsage(summary?.usage) }
+  const latestUsage = normalizeUsage(summary?.usage)
+  const existing = current.snapshots.find(item => item.day === day)
+  const previous = current.snapshots.at(-1)
+  const next = { day, startUsage: existing?.startUsage ?? previous?.latestUsage ?? latestUsage, latestUsage }
   const snapshots = current.snapshots.filter(item => item.day !== day).concat(next).slice(-MAX_SNAPSHOTS)
   return { ...current, snapshots }
 }
