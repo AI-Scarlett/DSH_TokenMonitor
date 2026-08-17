@@ -1,9 +1,21 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { normalizeUsage, snapshotDelta, summarizeSessions, totalTokens } from '../src/metrics.js'
+import { aggregateSessions, normalizeUsage, totalTokens } from '../src/metrics.js'
+
+const usage = (input, output = 0) => ({ uncachedInputTokens: input, cacheReadTokens: 0, cacheWriteTokens: 0, outputTokens: output })
+
 test('normalizes malformed usage without inventing tokens', () => assert.deepEqual(normalizeUsage({ uncachedInputTokens: 12, outputTokens: -4, cacheReadTokens: '3' }), { uncachedInputTokens: 12, cacheReadTokens: 0, cacheWriteTokens: 0, outputTokens: 0 }))
-test('aggregates only projection values exposed by session list', () => {
-  const result = summarizeSessions({ ids: ['a', 'b'], byId: { a: { projectionValues: { tokenUsage: { uncachedInputTokens: 100, outputTokens: 20 }, sessionStats: { turns: 2, steps: 3, llmMs: 500, toolMs: 20 } } }, b: { projectionValues: {} } } })
-  assert.equal(result.sessionCount, 2); assert.equal(result.measuredSessions, 1); assert.equal(result.totalTokens, 120); assert.equal(result.turns, 2); assert.equal(result.steps, 3)
+
+test('aggregates daily and per-model today, 7d, 30d, and total', () => {
+  const state = { ids: ['a', 'b'], byId: {
+    a: { projectionValues: { tokenMonitorUsage: { days: [{ day: '2026-08-17', usage: usage(100, 20) }, { day: '2026-08-11', usage: usage(30) }], models: [{ provider: 'openai', model: 'gpt-5', usage: usage(150, 20), days: [{ day: '2026-08-17', usage: usage(100, 20) }, { day: '2026-08-11', usage: usage(30) }] }] } } },
+    b: { projectionValues: {} },
+  } }
+  const result = aggregateSessions(state, new Date('2026-08-17T04:00:00Z'))
+  assert.equal(result.measuredSessions, 1)
+  assert.equal(totalTokens(result.overall.today), 120)
+  assert.equal(totalTokens(result.overall.days7), 150)
+  assert.equal(totalTokens(result.overall.total), 170)
+  assert.equal(totalTokens(result.models[0].periods.days30), 150)
+  assert.equal(result.daily.length, 2)
 })
-test('delta clamps counter resets instead of reporting negative usage', () => { const delta = snapshotDelta({ usage: { uncachedInputTokens: 100 } }, { usage: { uncachedInputTokens: 40, outputTokens: 8 } }); assert.equal(delta.usage.uncachedInputTokens, 0); assert.equal(totalTokens(delta.usage), 8) })

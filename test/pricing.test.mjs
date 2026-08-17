@@ -1,6 +1,0 @@
-import test from 'node:test'
-import assert from 'node:assert/strict'
-import { estimateCost, normalizePricing } from '../src/pricing.js'
-import { emptyState, normalizeStored, recordDailySnapshot } from '../src/storage.js'
-test('cost is a local estimate over four disjoint usage buckets', () => { const result = estimateCost({ uncachedInputTokens: 1_000_000, cacheReadTokens: 500_000, cacheWriteTokens: 250_000, outputTokens: 2_000_000 }, { uncachedInputPerMillion: 2, cacheReadPerMillion: 1, cacheWritePerMillion: 4, outputPerMillion: 3, currency: 'CNY' }); assert.equal(result.amount, 9.5); assert.equal(result.currency, 'CNY'); assert.equal(result.estimated, true) })
-test('invalid pricing fails to zero and snapshots retain a daily DSH baseline', () => { assert.deepEqual(normalizePricing({ outputPerMillion: -1, currency: 'usd' }), normalizePricing()); const first = recordDailySnapshot(emptyState(), { usage: { outputTokens: 3 } }, new Date('2026-08-17T01:00:00Z')); const second = recordDailySnapshot(first, { usage: { outputTokens: 5 } }, new Date('2026-08-17T22:00:00Z')); assert.equal(normalizeStored(second).snapshots.length, 1); assert.equal(second.snapshots[0].startUsage.outputTokens, 3); assert.equal(second.snapshots[0].latestUsage.outputTokens, 5) })

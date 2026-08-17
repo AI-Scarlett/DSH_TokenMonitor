@@ -1,18 +1,15 @@
-import { snapshotDelta } from './metrics.js'
+import { shanghaiDay, totalTokens } from './metrics.js'
 
-function dayKey(date) { return date.toISOString().slice(0, 10) }
-
-export function heatmapDays(snapshots, now = new Date(), days = 365) {
-  const byDay = new Map((snapshots ?? []).map(item => [item.day, item]))
+export function heatmapDays(daily, now = new Date(), days = 365) {
+  const byDay = new Map((daily ?? []).map(item => [item.day, totalTokens(item.usage)]))
+  const today = shanghaiDay(now)
+  const end = new Date(`${today}T04:00:00.000Z`)
   const result = []
-  const end = new Date(`${dayKey(now)}T00:00:00.000Z`)
   for (let offset = days - 1; offset >= 0; offset -= 1) {
     const date = new Date(end)
     date.setUTCDate(end.getUTCDate() - offset)
-    const day = dayKey(date)
-    const snapshot = byDay.get(day)
-    const delta = snapshot ? snapshotDelta({ usage: snapshot.startUsage }, { usage: snapshot.latestUsage }) : { totalTokens: 0 }
-    result.push({ day, tokens: delta.totalTokens })
+    const day = shanghaiDay(date)
+    result.push({ day, tokens: byDay.get(day) ?? 0 })
   }
   return result
 }

@@ -4,22 +4,25 @@ DSH Token Monitor 是一个标准、非破坏性的 DeepSeek Harness Host Plugin
 Client Bundle。它在 DSH 设置首页的一级“用量统计”栏目中汇总当前 Profile
 可见会话的真实 Provider Token 用量。
 
-`1.2.0` 增加最近 365 天的 GitHub 风格 DSH 用量热力图。每个格子来自
-当天 DSH 累计 Provider Token 的真实增量，不使用账号数据或字符数估算。
+`1.3.0` 增加按 Asia/Shanghai 自然日和实际 Provider／模型拆分的持久
+用量投影。设置首页可查看当日、7 日、30 日、历史总用量、每个模型明细、
+每日明细和最近 365 天热力图，不使用账号数据、价格或字符数估算。
 
 ## 数据准确性
 
-- Token 来自 DSH 标准 `tokenUsage` 投影：未缓存输入、缓存读取、缓存写入和输出。
-- 轮次、步骤、LLM 与工具耗时来自 `sessionStats` 投影。
+- Token 来自 DSH 持久会话中的 Provider usage：未缓存输入、缓存读取、缓存写入和输出。
+- 模型身份来自同一请求的 `request/header.config.provider/model`，模型切换后分别归档。
+- 流式 usage 与同一步骤最终 usage 使用替换折算，不会重复累计。
 - 缺少 Provider usage 的会话明确显示为未测量，不使用字符数补齐。
-- 安装时可读取已有会话的累计 Token；逐日趋势从安装后首次本地快照开始。
-- 费用按用户输入的每百万 Token 单价在浏览器本地估算，不是 Provider 账单。
+- 投影可回放当前 Profile 已持久化的历史会话；逐日详情最多保留最近 366 个日期。
+- 不显示价格或费用估算。
 
 ## 隐私与权限
 
 插件不读取提示词、回复正文、会话文件、环境变量、API Key 或其他凭证；
 不访问网络、不执行命令、不注册 Host HTTP 路由，也不修改 Profile 或 DSH。
-价格、预算和每天一条聚合快照仅保存在当前浏览器 `localStorage`。
+投影由 DSH 标准 `sessionProjections` 服务在内存和其官方投影缓存中维护；
+插件不注册额外存储、HTTP 路由或网络请求。
 
 ## DSH 安装契约
 
