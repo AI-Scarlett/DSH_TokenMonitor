@@ -1,7 +1,7 @@
 # DSH Token Monitor
 
 DSH Token Monitor 是一个标准、非破坏性的 DeepSeek Harness Host Plugin +
-Client Bundle。它在 DSH 设置的“插件 → Token 监控”中汇总当前 Profile
+Client Bundle。它在 DSH 设置首页的一级“用量统计”栏目中汇总当前 Profile
 可见会话的真实 Provider Token 用量。
 
 `1.2.0` 增加最近 365 天的 GitHub 风格 DSH 用量热力图。每个格子来自

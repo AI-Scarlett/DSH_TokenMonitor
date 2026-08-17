@@ -121,7 +121,7 @@ window.__ModuleLoader__.load({
         React.createElement('div', { style: styles.notice }, `趋势快照 ${local.snapshots.length} 天 · 安装前只能读取累计 Token，无法还原此前逐日变化。`, summary.measuredSessions < summary.sessionCount ? ' 部分会话没有 Provider usage，未测量数据不会被估算补齐。' : ''))
     }
     const name = 'dsh-token-monitor'; const inject = ['slots']
-    function apply(ctx) { ctx.slots.inject('settings.plugins.tab', () => ctx.slots.register({ name: 'settings.plugins.tab', id: 'dsh-token-monitor', order: 70, label: () => 'Token 监控', inject: () => ({}) }, TokenMonitorPanel)) }
+    function apply(ctx) { ctx.slots.inject('settings.section', () => ctx.slots.register({ name: 'settings.section', id: 'dsh-token-monitor', order: 12, label: () => '用量统计', inject: () => ({}) }, TokenMonitorPanel)) }
     module.exports = { name, inject, apply }; return module.exports
   },
 })
