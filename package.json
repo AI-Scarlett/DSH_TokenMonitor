@@ -1,0 +1,11 @@
+{
+  "name": "dsh-token-monitor",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A zero-dependency local dashboard for monitoring LLM token usage and cost.",
+  "scripts": {
+    "dev": "python3 -m http.server 4173",
+    "test": "python3 -m unittest discover -s tests -v",
+    "build": "python3 scripts/build.py"
+  }
+}

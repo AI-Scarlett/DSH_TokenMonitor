@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#07111f" />
+  <meta name="description" content="DSH TokenMonitor — 本地优先的模型 Token 用量、费用和配额监控面板。" />
+  <title>DSH TokenMonitor</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div><strong>TokenMonitor</strong><small>DSH OBSERVABILITY</small></div>
+    </div>
+    <nav aria-label="主导航">
+      <button class="nav-item active" data-view="overview"><span>⌁</span>总览</button>
+      <button class="nav-item" data-view="requests"><span>↗</span>请求记录</button>
+      <button class="nav-item" data-view="models"><span>◇</span>模型分析</button>
+      <button class="nav-item" data-view="budgets"><span>◴</span>预算中心</button>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="status-card"><i></i><div><b>采集器正常</b><small id="collectorTime">刚刚同步</small></div></div>
+      <p>数据仅保存在当前浏览器</p>
+    </div>
+  </aside>
+
+  <main class="main-shell">
+    <header class="topbar">
+      <button class="icon-button mobile-only" id="menuButton" aria-label="打开菜单">☰</button>
+      <div class="page-title"><p>工作空间 / 本地环境</p><h1 id="pageHeading">用量总览</h1></div>
+      <div class="top-actions">
+        <label class="search"><span>⌕</span><input id="globalSearch" type="search" placeholder="搜索模型或请求…" /></label>
+        <button class="icon-button" id="themeButton" aria-label="切换主题">☼</button>
+        <button class="primary-button" id="addUsageButton"><span>＋</span>记录用量</button>
+      </div>
+    </header>
+
+    <section class="content view active" id="overviewView">
+      <div class="filter-row">
+        <div class="live-pill"><span></span>实时监控</div>
+        <div class="period-switch" id="periodSwitch">
+          <button data-period="1">今日</button><button class="active" data-period="7">7 天</button><button data-period="30">30 天</button>
+        </div>
+      </div>
+      <div class="metric-grid" id="metricGrid"></div>
+      <div class="dashboard-grid">
+        <article class="panel usage-panel">
+          <div class="panel-head"><div><p class="eyebrow">TOKEN TRAFFIC</p><h2>Token 使用趋势</h2></div><div class="legend"><span><i class="input-dot"></i>输入</span><span><i class="output-dot"></i>输出</span></div></div>
+          <div class="chart-wrap"><canvas id="usageChart" role="img" aria-label="Token 使用趋势折线图"></canvas><div class="chart-tooltip" id="chartTooltip"></div></div>
+        </article>
+        <article class="panel budget-panel">
+          <div class="panel-head"><div><p class="eyebrow">MONTHLY BUDGET</p><h2>本月预算</h2></div><button class="text-button" data-view-link="budgets">管理</button></div>
+          <div class="budget-ring-wrap"><div class="budget-ring" id="budgetRing"><div><strong id="budgetPercent">0%</strong><span>已使用</span></div></div></div>
+          <div class="budget-copy"><div><span>当前费用</span><b id="budgetUsed">$0</b></div><div><span>预算上限</span><b id="budgetLimit">$100</b></div></div>
+          <div class="budget-footer"><span>按当前速度预计</span><strong id="budgetForecast">$0</strong></div>
+        </article>
+        <article class="panel model-panel">
+          <div class="panel-head"><div><p class="eyebrow">MODEL SHARE</p><h2>模型分布</h2></div><button class="text-button" data-view-link="models">查看全部</button></div>
+          <div id="modelDistribution" class="model-list"></div>
+        </article>
+        <article class="panel activity-panel">
+          <div class="panel-head"><div><p class="eyebrow">LIVE ACTIVITY</p><h2>最近请求</h2></div><button class="text-button" data-view-link="requests">全部记录</button></div>
+          <div class="table-wrap"><table><thead><tr><th>模型</th><th>状态</th><th>Token</th><th>费用</th><th>时间</th></tr></thead><tbody id="recentTable"></tbody></table></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="content view" id="requestsView">
+      <article class="panel full-panel"><div class="panel-head"><div><p class="eyebrow">REQUEST LOG</p><h2>请求记录</h2></div><button class="secondary-button" id="exportButton">导出 JSON</button></div>
+        <div class="table-tools"><input id="requestSearch" placeholder="筛选模型、项目或状态"/><select id="statusFilter"><option value="all">全部状态</option><option value="success">成功</option><option value="error">失败</option></select></div>
+        <div class="table-wrap"><table><thead><tr><th>时间</th><th>模型</th><th>项目</th><th>输入</th><th>输出</th><th>总 Token</th><th>费用</th><th>状态</th></tr></thead><tbody id="requestTable"></tbody></table></div>
+      </article>
+    </section>
+
+    <section class="content view" id="modelsView">
+      <div class="model-cards" id="modelCards"></div>
+    </section>
+
+    <section class="content view" id="budgetsView">
+      <div class="budget-layout">
+        <article class="panel"><div class="panel-head"><div><p class="eyebrow">BUDGET CONTROL</p><h2>预算设置</h2></div></div>
+          <form id="budgetForm" class="settings-form"><label>月度预算（USD）<input type="number" id="budgetInput" min="1" step="1" required /></label><label>预警阈值（%）<input type="number" id="alertInput" min="1" max="100" required /></label><button class="primary-button" type="submit">保存设置</button></form>
+        </article>
+        <article class="panel"><div class="panel-head"><div><p class="eyebrow">COST PROJECTION</p><h2>费用预测</h2></div></div><div class="projection" id="projection"></div></article>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal-backdrop" id="usageModal" hidden>
+    <form class="modal" id="usageForm"><div class="modal-head"><div><p class="eyebrow">NEW RECORD</p><h2>记录 Token 用量</h2></div><button type="button" class="icon-button" data-close-modal>×</button></div>
+      <div class="form-grid"><label>模型<select name="model"><option>deepseek-chat</option><option>deepseek-reasoner</option><option>gpt-4o</option><option>claude-3.7-sonnet</option><option>gemini-2.5-pro</option></select></label><label>项目<input name="project" value="DSH" required /></label><label>输入 Token<input name="input" type="number" min="0" value="1200" required /></label><label>输出 Token<input name="output" type="number" min="0" value="420" required /></label><label>费用（USD）<input name="cost" type="number" min="0" step="0.0001" value="0.012" required /></label><label>状态<select name="status"><option value="success">成功</option><option value="error">失败</option></select></label></div>
+      <div class="modal-actions"><button type="button" class="secondary-button" data-close-modal>取消</button><button type="submit" class="primary-button">添加记录</button></div>
+    </form>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js" defer></script>
+</body>
+</html>
