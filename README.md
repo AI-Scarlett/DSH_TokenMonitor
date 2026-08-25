@@ -31,9 +31,12 @@ Client Bundle。它在 DSH 设置首页的一级“用量统计”栏目中汇�
 - Bundle patch：`cordis.patch.yml`
 - Host entry：`src/index.mjs`
 - Browser bundle：`src/client.js`
-- DSH：`>=0.1.0-rc.6`
+- DSH：`>=0.1.0-rc.6 <0.2.0`
+- 版本声明：`rc.7`、`rc.8`、`0.1.1-rc.1`、`0.1.1-rc.2` 均兼容
 - Node.js：`>=22.13.0`
 - Profile：`web`
+
+上面的版本矩阵是来源包兼容契约，不等同于逐版本真实 Profile 的安装、启动、卸载或回滚验收；这些证据由 DSH STORE 独立记录。
 
 安装应通过支持固定 GitHub Commit 的 DSH 插件管理流程进行。不要修改
 DeepSeek Harness 源码或任何 `@deepseek-ai/*` 包。
