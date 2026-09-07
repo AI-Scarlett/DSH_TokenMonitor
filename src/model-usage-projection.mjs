@@ -4,10 +4,15 @@ const MAX_DAILY_DETAILS = 366
 const zeroUsage = () => Object.fromEntries(TOKEN_KEYS.map(key => [key, 0]))
 
 function usageFrom(event) {
+  const stream = event?.data?.stream
+  const streamUsage = Array.isArray(stream)
+    ? stream.findLast(item => item?.type === 'chunk' && item.chunk?.type === 'usage')?.chunk.usage
+    : undefined
   const usage = event?.type === 'assistant/chunk' && event.data?.chunk?.type === 'usage'
     ? event.data.chunk.usage
     : event?.type === 'assistant/message'
-      ? event.data?.usage
+      ? event.data?.usage ?? streamUsage
+      : event?.type === 'assistant/attempt' ? streamUsage
       : undefined
   if (!usage) return null
   const number = value => Number.isFinite(value) && value >= 0 ? Math.trunc(value) : 0
@@ -92,6 +97,9 @@ export const modelUsageProjectionDefinition = {
   schema,
   init: () => ({ route: { provider: 'unknown', model: 'unknown' }, days: {}, models: {}, last: null }),
   apply(state, event) {
+    if (event?.type === 'step/start' || event?.type === 'llm/retry-started') {
+      return { ...state, last: null }
+    }
     if (event?.type === 'request/header') {
       const route = routeFrom(event)
       return route.provider === state.route.provider && route.model === state.route.model ? state : { ...state, route }
@@ -101,9 +109,14 @@ export const modelUsageProjectionDefinition = {
     const turn = event.data.turn
     const step = event.data.step
     const previous = state.last?.turn === turn && state.last?.step === step ? state.last : null
-    if (previous && sameUsage(previous.usage, usage)) return state
+    const source = event.data?.message?.source
+    const route = typeof source?.provider === 'string' && source.provider.trim()
+      && typeof source?.model === 'string' && source.model.trim()
+      ? { provider: source.provider.trim().slice(0, 160), model: source.model.trim().slice(0, 160) }
+      : state.route
+    if (previous && sameUsage(previous.usage, usage) && routeKey(previous.route) === routeKey(route)) return state
     let next = previous ? addContribution(state, previous, -1) : state
-    const contribution = { turn, step, day: shanghaiDay(event.time), route: state.route, usage }
+    const contribution = { turn, step, day: shanghaiDay(event.time), route, usage }
     next = addContribution(next, contribution, 1)
     return pruneDays({ ...next, last: contribution })
   },
@@ -117,7 +130,7 @@ export const modelUsageProjectionDefinition = {
       days: Object.entries(item.days).sort(([a], [b]) => a.localeCompare(b)).map(([day, usage]) => ({ day, usage })),
     })),
   }),
-  stateVersion: 1,
+  stateVersion: 2,
 }
 
 export { TOKEN_KEYS }

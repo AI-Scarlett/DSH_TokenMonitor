@@ -34,3 +34,31 @@ test('malformed or missing usage never invents tokens', () => {
   const unchanged = projection.apply(projection.init(), { type: 'assistant/message', time: 1, data: { turn: 0, step: 0 } })
   assert.deepEqual(projection.view(unchanged), { timezone: 'Asia/Shanghai', days: [], models: [] })
 })
+
+test('v2 failed attempt and successful retry in the same step are both counted', () => {
+  const state = fold([
+    header(1, 'openai', 'gpt-5'),
+    { type: 'step/start', data: { turn: 1, step: 0 } },
+    { type: 'assistant/attempt', time: 2, data: { turn: 1, step: 0, stream: [
+      { type: 'chunk', time: 2, chunk: { type: 'usage', usage: { inputTokens: 50, outputTokens: 5 } } },
+    ] } },
+    { type: 'llm/retry-started', data: { turn: 1, step: 0 } },
+    message(3, 1, 0, { inputTokens: 80, outputTokens: 10 }),
+  ])
+  assert.equal(projection.view(state).models[0].usage.uncachedInputTokens, 130)
+  assert.equal(projection.view(state).models[0].usage.outputTokens, 15)
+})
+
+test('v2 message uses settled stream usage and its actual route after model failover', () => {
+  const state = fold([
+    header(1, 'initial-provider', 'initial-model'),
+    { type: 'assistant/message', time: 2, data: { turn: 1, step: 0,
+      message: { source: { provider: 'fallback-provider', model: 'fallback-model' } },
+      stream: [{ type: 'chunk', time: 2, chunk: { type: 'usage', usage: { inputTokens: 10, outputTokens: 7 } } }],
+    } },
+  ])
+  const model = projection.view(state).models[0]
+  assert.equal(model.provider, 'fallback-provider')
+  assert.equal(model.model, 'fallback-model')
+  assert.equal(model.usage.outputTokens, 7)
+})
