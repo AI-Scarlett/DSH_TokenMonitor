@@ -4,7 +4,7 @@ DSH Token Monitor 是一个标准、非破坏性的 DeepSeek Harness Host Plugin
 Client Bundle。它在 DSH 设置首页的一级“用量统计”栏目中汇总当前 Profile
 可见会话的真实 Provider Token 用量。
 
-`1.3.2` 适配 DSH `0.1.3-alpha.1` 的嵌入式流 usage 与失败 attempt，重试用量分别累计；最终消息的实际 Provider/模型优先于请求配置。投影版本升级后由宿主回放重建缓存。
+`1.3.3` 适配 DSH `0.1.5-alpha.2` 的嵌入式流 usage 与失败 attempt，重试用量分别累计；最终消息的实际 Provider/模型优先于请求配置。投影版本升级后由宿主回放重建缓存。
 
 `1.3.1` 增加按 Asia/Shanghai 自然日和实际 Provider／模型拆分的持久
 用量投影。设置首页可查看当日、7 日、30 日、历史总用量、每个模型明细、
@@ -34,7 +34,7 @@ Client Bundle。它在 DSH 设置首页的一级“用量统计”栏目中汇�
 - Host entry：`src/index.mjs`
 - Browser bundle：`src/client.js`
 - DSH：`>=0.1.2-rc.1 <0.2.0`
-- 版本声明：`0.1.2-rc.1` 与 `0.1.3-alpha.1` 已适配；历史 rc 版本声明保留供旧锁定源回读
+- 版本声明：`0.1.2-rc.1` 与 `0.1.5-alpha.2` 已适配；历史 rc 版本声明保留供旧锁定源回读
 - Node.js：`>=22.13.0`
 - Profile：`web`
 
